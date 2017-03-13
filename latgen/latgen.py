@@ -26,7 +26,7 @@ class NetworkGenerator():
 
     def gen_nodes(self):
         nodes = []
-        for node in xrange(self.n):
+        for node in range(self.n):
             nodes.append(random.choice(self.cities))
 
         return nodes
@@ -42,8 +42,8 @@ class NetworkGenerator():
         cons = []
         def fcon():
             bws = np.random.normal(mean_bw, 10, self.n)
-            for i in xrange(len(locs)):
-                for j in xrange(i + 1, len(locs)):
+            for i in range(len(locs)):
+                for j in range(i + 1, len(locs)):
                     l = self.get_lat_btwn(locs[i], locs[j])
                     cons.append((i, j, l, bws[i]))
 
@@ -51,13 +51,13 @@ class NetworkGenerator():
         # bandwidth is partitioned evenly to each peer? idk what to do with this
         def star():
             bw = np.random.normal(mean_bw, 10, 1)/(self.n - 1)
-            for i in xrange(1, len(locs)):
+            for i in range(1, len(locs)):
                 l = self.get_lat_btwn(locs[0], locs[i])
                 cons.append((0, i, l, bw))
                         
         topologies = {"fcon": fcon, "star": star}
 
-        if topology not in topologies.keys():
+        if topology not in list(topologies.keys()):
             raise ValueError("Invalid topology")
 
         topologies[topology]()
@@ -85,13 +85,13 @@ class NetworkGenerator():
 
     # makes those green ATT boxes into 2d array
     def get_latencies(self, tree):
-        lat_array = [[] for i in xrange(24)]
+        lat_array = [[] for i in range(24)]
         vals = tree.xpath("//td[@bgcolor='#66CC66']")
 
         cap = 1
         pos = 0
         while pos < len(vals):
-            for i in xrange(cap):
+            for i in range(cap):
                 lat_array[cap - 1].append(vals[pos])
                 pos += 1
 
@@ -124,7 +124,7 @@ class NetworkGenerator():
     # gets population information for each city in self.cities
     # i made this and then realized its not useful but maybe i'll figure out a use for it
     def get_pops(self):
-        print 'fetching population information...'
+        print('fetching population information...')
         pops = []
         req = "http://api.wolframalpha.com/v2/query?appid=586XQG-QXXJ4K6244&input=population%%20of%%20%s&format=plaintext"
         for city in lg.cities:
@@ -158,7 +158,7 @@ class NetworkGenerator():
         labels = {}
         locs = self.get_locs()
         used_cities = []
-        for node in xrange(len(self.nodes)):
+        for node in range(len(self.nodes)):
             city = self.nodes[node]
             # could add random noise to every lat long as well
             loc = locs[self.nodes[node]]
@@ -172,7 +172,7 @@ class NetworkGenerator():
 
         edge_labels = {}
         edges = g.edges()
-        for i in xrange(len(g.edges())):
+        for i in range(len(g.edges())):
             edge_labels[edges[i]] = '%d, %d' % (cons[i][2], cons[i][3]) 
 
         nx.draw(g, pos, node_size=1000, alpha=.5)
@@ -196,7 +196,7 @@ def update_locs():
     locs = []
     for city in lg.cities:
         loc = geolocator.geocode({'city': city})
-        print loc.address
+        print(loc.address)
         f.write('%s %.5f %.5f\n' % (city, loc.longitude, loc.latitude))
        
 def insert_into_wl(filepath, cons):
@@ -269,9 +269,9 @@ def main():
     options, args = parser.parse_args(sys.argv)
 
     if options.update:
-        print 'updating locs...'
+        print('updating locs...')
         update_locs()
-        print 'done'
+        print('done')
 
     # get num nodes from existing workload if not specified
     # if no existing workload, set to 10

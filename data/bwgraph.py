@@ -18,9 +18,9 @@ class BWGrapher():
         for con in self.conns:
             g.add_edge(con[0], con[1], weight=con[2])
 
-        print g.edges(data=True)
+        print(g.edges(data=True))
         edge_labels = dict([((u, v,), d['weight']) for u,v,d in g.edges(data=True)])
-        print edge_labels
+        print(edge_labels)
 
         pos = nx.circular_layout(g)
         nx.draw(g, pos, node_size=1000, alpha=.5)
@@ -59,5 +59,5 @@ class BWGrapher():
 if __name__ == "__main__":
     bwg = BWGrapher()
     while True:
-        n = input('which node do you want to see upload data for?\n')
+        n = eval(input('which node do you want to see upload data for?\n'))
         bwg.graph_node(n)

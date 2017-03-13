@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import os
-import ConfigParser
+import configparser
 import util
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
@@ -29,7 +29,7 @@ class Grapher():
         self.cur = self.conn.cursor()
 
         # configure
-        self.config = ConfigParser.ConfigParser()
+        self.config = configparser.ConfigParser()
         self.config.read(cfg)
         self.wl = self.config.get('general', 'workload')
 
@@ -41,7 +41,7 @@ class Grapher():
     
     # returns dataframe of runs with given workload
     def loaddf(self):
-        print 'loading sql into dataframe...'
+        print('loading sql into dataframe...')
         #get mean block times where workload=samples/star order by runid ascneding
         cols_dict = {'runids': [], 'latencies' : [], 'bandwidths': [], 'durations': []}
 
@@ -49,7 +49,7 @@ class Grapher():
         sql = 'SELECT bandwidth, duration, latency, runid FROM runs where workload LIKE ("%" || ? || "%") ORDER BY runid ASC'
         for row in self.cur.execute(sql, (self.wl,)):
             i = 0
-            for k in sorted(cols_dict.iterkeys()):
+            for k in sorted(cols_dict.keys()):
                 cols_dict[k].append(row[i])
                 i += 1
 
@@ -73,7 +73,7 @@ class Grapher():
 
     @is_graph('graph of block times vs time for most recent run')
     def bttime(self):
-        print 'loading block time vs time...'
+        print('loading block time vs time...')
         # get block_time rows for most recent run
         self.cur.execute('SELECT timestamp, time, runid FROM block_times where runid=(select max(runid) from runs)')
         rows = self.cur.fetchall()
@@ -82,9 +82,9 @@ class Grapher():
         # get tuple reflecting run config to show under graph
         self.cur.execute('SELECT * FROM runs where runid=?', rid)
         config = self.cur.fetchone()
-        config = map(str, config)
+        config = list(map(str, config))
         names = [i[0] for i in self.cur.description]
-        desc = str(zip(names, config))
+        desc = str(list(zip(names, config)))
 
         timestamps = []
         times = []
@@ -96,7 +96,7 @@ class Grapher():
         # change nanosecond timestamps to seconds
         timedf['timestamps'] = timedf['timestamps'].astype(float) / (1000 * 1000)
         g = sns.lmplot("timestamps", "times", data=timedf)
-        print desc
+        print(desc)
         g.ax.set_title(self.wl)
         g.set_axis_labels("time (seconds)", "block times (ms)")
         # doesn't work...
@@ -104,7 +104,7 @@ class Grapher():
 
     @is_graph('graph of latencies vs mean for given bandwidths')
     def latmean(self):
-        print 'loading latency vs mean...'
+        print('loading latency vs mean...')
         self.load_block_times()
         filtered = util.lock_float_field(self.df, 'bandwidths', self.bws)
         if filtered is None:
@@ -115,7 +115,7 @@ class Grapher():
 
     @is_graph('graph of latencies vs block_times (colored by runid) for given bandwidths')
     def latmean_nodes(self):
-        print 'loading latency vs mean all nodes displayed...'
+        print('loading latency vs mean all nodes displayed...')
         self.load_block_times()
         filtered = util.lock_float_field(self.df, 'bandwidths', self.bws)
         if filtered is None:
@@ -149,7 +149,7 @@ class Grapher():
 
     @is_graph('graph of latencies vs simulation durations for given bandwidths')
     def latdur(self):
-        print 'latency vs duration'
+        print('latency vs duration')
         filtered = util.lock_float_field(self.df, 'bandwidths', self.bws)
         if filtered is None:
             return self.latmeanbw()
@@ -158,7 +158,7 @@ class Grapher():
 
     @is_graph('graph of bandwidths vs means for given latencies')
     def bwmeans(self):
-        print 'bandwidth vs means'
+        print('bandwidth vs means')
         self.load_block_times()
         filtered = util.lock_float_field(self.df, 'latencies', self.lats)
         if filtered is None:
@@ -177,7 +177,7 @@ class Grapher():
 
     #@is_graph
     def bwdur(self):
-        print 'bandwidth vs durations'
+        print('bandwidth vs durations')
         filtered = util.lock_float_field(self.df, 'latencies', self.lats)
         if filtered is None:
             return latmeanbw()
@@ -203,7 +203,7 @@ class Grapher():
             # convert from microseconds to seconds
             timestamps.append(float(row[0]) / (1000 * 1000))
 
-        counts = [i + 1 for i in xrange(len(rows))]
+        counts = [i + 1 for i in range(len(rows))]
         
         plt.figure()
         plt.fill_between(timestamps, counts, 0)
@@ -222,7 +222,7 @@ class Grapher():
             runid_bw[rid] = bw
 
         # create dataframe of file times vs their size and bandwidth of that run
-        runids = runid_bw.keys()
+        runids = list(runid_bw.keys())
         df_dict = {'bandwidth': [], 'time': [], 'size': []}
         self.cur.execute('SELECT runid, time, size FROM file_times WHERE runid IN (%s)' % ','.join('?'*len(runids)), runids)
  
@@ -272,19 +272,19 @@ class Grapher():
    
 # determines what graphs to show user with prompt
 def pick_figs(grapher):
-    print 'Which graphs would you like (space separated list):'
+    print('Which graphs would you like (space separated list):')
     i = 0
     for f in graph_funcs:
-        print '%d: %s' % (i, f[1])
+        print('%d: %s' % (i, f[1]))
         i += 1
 
-    inp = raw_input('\n->')
+    inp = input('\n->')
     figs = inp.split(' ')
     # run them all by default
     if inp == '':
-        figs = [i for i in xrange(len(graph_funcs))]
+        figs = [i for i in range(len(graph_funcs))]
 
-    figs = map(int, figs)
+    figs = list(map(int, figs))
     return figs
 
 # gets figs from config file
@@ -292,13 +292,13 @@ def read_figs(grapher):
     cfg = grapher.config
     figs = cfg.get('graphs', 'graphs')
     figs = figs.split()
-    figs = map(int, figs)
+    figs = list(map(int, figs))
 
     lats = cfg.get('graphs', 'latencies')
-    grapher.lats = map(int, lats.split())
+    grapher.lats = list(map(int, lats.split()))
 
     bws = cfg.get('graphs', 'bandwidths')
-    grapher.bws = map(int, bws.split())
+    grapher.bws = list(map(int, bws.split()))
 
     return figs
 

@@ -28,10 +28,10 @@ def lock_float_field(df, field, vals=[]):
     return filtered
 
 def prompt(field):
-    vals = raw_input('make graphs where ' + field + " (space separated list)=")
+    vals = input('make graphs where ' + field + " (space separated list)=")
     if vals == "":
         return []
 
     vals = vals.split()
-    vals = map(float, vals)
+    vals = list(map(float, vals))
     return vals
